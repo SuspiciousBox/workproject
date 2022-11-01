@@ -1,16 +1,35 @@
-import * as fs from "fs";
+import { readFileSync, writeFileSync } from "fs";
+import { join } from "path";
 
-export default function Page(): void {
-  const re = /apples/gi;
-  const words = fs.readFileSync("./test.txt", "utf8");
-  const arrayWords = Array.from(words);
+export default function Page() {
+  //Regex
+  const re = /([\w']+)-?([\w']+)?/gm;
 
-  if (words.search(re) == -1) {
-    console.log("Does not contain Apples");
-  } else {
-    console.log("Contains Apples");
-  }
+  //read file content as utf-8 string
 
-  console.log(arrayWords);
-  // let sortedWords= arrayWords.sort()
+  const file = readFileSync("./test.txt").toString("utf-8");
+
+  // all valid word matches
+  const matches = Array.from(file.matchAll(re)).filter((m) => !!m);
+
+  // map of: word => count
+  const counter = matches.reduce((r, word) => {
+    const lc = word[0].toLowerCase();
+
+    if (!r[lc]) r[lc] = 1;
+    else r[lc] += 1;
+
+    return r;
+  }, {} as Record<string, number>);
+
+  // array of output lines
+  const output = [
+    "word: count\n",
+    ...Object.entries(counter)
+      .map(([word, count]) => `${word}:${count}`)
+      .sort(),
+  ];
+
+  //Write Output to a file
+  writeFileSync(join(__dirname, "output.txt"), `${output.join("\n")}\n`);
 }
